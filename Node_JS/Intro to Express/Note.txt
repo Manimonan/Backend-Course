@@ -1,0 +1,5 @@
+........Handling  Routes ......
+1. Order matters 
+2. Can not call next() after send()
+3. "/" matches for everything.
+4.Calling res.send implicitly call res.end()
