@@ -1,0 +1,16 @@
+[
+  {
+    "houseName": " MyQuater",
+    "price": "566",
+    "location": "goa",
+    "rating": "5",
+    "photoUrl": "fssfs"
+  },
+  {
+    "houseName": "second Home",
+    "price": "1200",
+    "location": "kolkata",
+    "rating": "3",
+    "photoUrl": "https://unsplash.com/photos/white-curtains-frame-a-bright-window-OQLV2kNPSQU"
+  }
+]
