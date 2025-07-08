@@ -1,0 +1,9 @@
+  <% if(errorMessages.length > 0){%>
+            <div class="bg-white border border-red-400 text-red-300 px-4 py-4 relative rounded-lg" role="alert">
+             <ul class="list-disc list-inside space-y-3">
+              <% errorMessages.forEach(error =>{%>
+              <li><%= error %></li>
+                <%});%>
+             </ul>
+            </div>
+            <%} %>

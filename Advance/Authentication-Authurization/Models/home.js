@@ -28,14 +28,14 @@ const homeSchema = new mongoose.Schema({
   },
 });
 // Middleware to delete associated favorites when a home is deleted
-homeSchema.pre('findOneAndDelete', async function(next) {
-  const homeId = this.getQuery()._id;
-  try {
-    // Delete associated favorites
-    await mongoose.model('Favorites').deleteMany({ homeId: homeId });
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
+// homeSchema.pre('findOneAndDelete', async function(next) {
+//   const homeId = this.getQuery()._id;
+//   try {
+//     // Delete associated favorites
+//     await mongoose.model('Favorites').deleteMany({ homeId: homeId });
+//     next();
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 module.exports = mongoose.model("Home", homeSchema);

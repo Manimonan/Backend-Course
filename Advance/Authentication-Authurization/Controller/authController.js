@@ -1,24 +1,65 @@
-const {check} = require("express-validator")
+const {check, validationResult} = require("express-validator");
+const User = require("../Models/users");
+const bcrypt = require('bcrypt');
+
 exports.getLogin = (req, res, next) => {
   res.render("auth/login", {
     pageTitle: "login",
     currentPage: "login",
     isLoggedIn:false,
+    user:{},
   });
   
 };
 
-exports.postLogin =(req,res,next)=>{
-  req.session.isLoggedIn = true;
-  //res.cookie("isLoggedIn",true)
-  //req.isLoggedIn = true;
-  res.redirect('/')
+exports.postLogin = async(req,res,next)=>{
+
+   const {email,password} =req.body;
+   try{
+    const user = await User.findOne({email});
+
+    if (!user) {
+      console.log("User not found")
+      return res.status(422).render('auth/login',{
+        pageTitle:'Login',
+        currentPage:'login',
+        isLoggedIn:false,
+        errorMessages:["Data not found."],
+        oldInput:{email:email,password:"",},
+        user:{},
+      })
+    }
+    const doMatch = await bcrypt.compare(password, user.password); // Assuming user.password stores the hashed password
+
+    if (doMatch) {
+      req.session.isLoggedIn = true;
+      req.session.user = user; // Store the user object in the session (optional but common)
+      await req.session.save(); // Ensure session is saved before redirecting
+      console.log('User logged in successfully:', user.email);
+      return res.redirect('/');
+    } else {
+      console.log('Login failed: Incorrect password for user:', user.email);
+      return res.status(422).render('auth/login', {
+        pageTitle: "Login",
+        currentPage: "login",
+        isLoggedIn: false,
+        errorMessages: ["Invalid email or password."], // General message for security
+        oldInput: {email: email,password: ''},
+        user:{},
+      });
+    }
+   }catch(err){
+    console.log('error during login')
+   }
 }
 exports.getSignup =(req,res,next)=>{
   res.render('auth/signUp',{
     pageTitle:'signUp',
     currentPage:'signup',
     isLoggedIn:false,
+    errorMessages:[],
+    oldInput:{name:"",email:"",password:"",userType:""},
+    user:{},
   })
 }
 exports.postSignUp =[
@@ -55,22 +96,53 @@ exports.postSignUp =[
   check("userType")
   .notEmpty()
   .withMessage("Please select a user type")
-  .isIn(['guest','host'])
+  .isIn(['user','host'])
   .withMessage("Invalid user type"),
 
-  check("terms")
+  check("turmsAccept")
   .notEmpty()
-  .withMessage("Please accept terms & conditions ")
-  .custom((value,{req})=>{
-    if (value !== "on") {
-      throw new Error("Please accept terms & conditions")
-    }
-    return true;
-  }),
+  .withMessage("Please accept terms & conditions "),
   
   (req,res,next)=>{
-  console.log(req.body);
-  res.redirect("/login")
+    const {name,email,password,userType}=req.body;
+    const errors =validationResult(req);
+    if (!errors.isEmpty()) {
+       return res.status(422).render('auth/signUp',{
+         pageTitle:'signUp',
+         currentPage:'signup',
+         isLoggedIn:false,
+         errorMessages:errors.array().map(error =>error.msg),
+         oldInput:{
+          name,
+          email,
+          password,
+          userType,
+         },
+         user:{},
+      });
+    }
+
+    bcrypt.hash(password,12).then((hashedPassword)=>{
+    const user = new User({name,email,password:hashedPassword,userType})
+    return user.save()
+    }).then(()=>{
+      res.redirect("/login");
+    }).catch((err)=>{
+      res.status(422).render('auth/signUp',{
+         pageTitle:'signUp',
+         currentPage:'signup',
+         isLoggedIn:false,
+         errorMessages:[err.message],
+         oldInput:{
+          name,
+          email,
+          userType,
+         },
+         user:{},
+      });
+      console.log(err.message)
+    })
+    
 }]
 
 exports.postLogout =(req,res,next)=>{
